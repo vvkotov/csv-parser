@@ -1,9 +1,16 @@
 import { useState } from "react";
+import Papa from "papaparse";
 import { Database, Upload } from "lucide-react";
 import { FileUpload } from "./components/FileUpload";
 import { EmptyState } from "./components/EmptyState";
+import { SelectHeaderRow } from "./components/SelectHeaderRow";
 
-type AppState = "empty" | "uploading" | "validating" | "viewing";
+type AppState =
+  | "empty"
+  | "uploading"
+  | "selecting-header"
+  | "validating"
+  | "viewing";
 
 function App() {
   const [state, setState] = useState<AppState>("empty");
@@ -11,9 +18,17 @@ function App() {
     null
   );
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [parseResult, setParseResult] = useState<Papa.ParseResult<
+    string[]
+  > | null>(null);
+  const [selectedHeaderRowIndex, setSelectedHeaderRowIndex] = useState<
+    number | null
+  >(null);
 
   const handleNewUpload = () => {
     setState("empty");
+    setParseResult(null);
+    setSelectedHeaderRowIndex(null);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -23,16 +38,32 @@ function App() {
 
     try {
       const csvContent = await file.text();
-      console.log(csvContent);
+      const result = Papa.parse<string[]>(csvContent);
+      console.log(result);
 
+      if (result.errors.length > 0) {
+        throw new Error(result.errors[0].message);
+      }
+
+      setParseResult(result);
       setUploadStatus("success");
-      setState("validating");
+      setState("selecting-header");
     } catch (error) {
       setUploadStatus("error");
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to parse CSV file"
       );
       setState("empty");
+    }
+  };
+
+  const handleHeaderRowSelect = (rowIndex: number) => {
+    setSelectedHeaderRowIndex(rowIndex);
+  };
+
+  const handleHeaderConfirm = () => {
+    if (selectedHeaderRowIndex !== null) {
+      setState("validating");
     }
   };
 
@@ -94,6 +125,16 @@ function App() {
             />
           </div>
         );
+
+      case "selecting-header":
+        return parseResult ? (
+          <SelectHeaderRow
+            parseResult={parseResult}
+            selectedRowIndex={selectedHeaderRowIndex}
+            onRowSelect={handleHeaderRowSelect}
+            onConfirm={handleHeaderConfirm}
+          />
+        ) : null;
 
       default:
         return null;
