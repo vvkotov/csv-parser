@@ -1,13 +1,39 @@
 import { useState } from "react";
 import { Database, Upload } from "lucide-react";
+import { FileUpload } from "./components/FileUpload";
+import { EmptyState } from "./components/EmptyState";
 
 type AppState = "empty" | "uploading" | "validating" | "viewing";
 
 function App() {
   const [state, setState] = useState<AppState>("empty");
+  const [uploadStatus, setUploadStatus] = useState<"success" | "error" | null>(
+    null
+  );
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleNewUpload = () => {
     setState("empty");
+  };
+
+  const handleFileUpload = async (file: File) => {
+    setState("uploading");
+    setUploadStatus(null);
+    setErrorMessage("");
+
+    try {
+      const csvContent = await file.text();
+      console.log(csvContent);
+
+      setUploadStatus("success");
+      setState("validating");
+    } catch (error) {
+      setUploadStatus("error");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to parse CSV file"
+      );
+      setState("empty");
+    }
   };
 
   const renderHeader = () => (
@@ -42,7 +68,44 @@ function App() {
     </header>
   );
 
-  return <div className="min-h-screen bg-gray-50">{renderHeader()}</div>;
+  const renderContent = () => {
+    switch (state) {
+      case "empty":
+        return (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FileUpload
+              onFileUpload={handleFileUpload}
+              isProcessing={false}
+              uploadStatus={uploadStatus}
+              errorMessage={errorMessage}
+            />
+            <EmptyState onUploadClick={() => {}} />
+          </div>
+        );
+
+      case "uploading":
+        return (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FileUpload
+              onFileUpload={handleFileUpload}
+              isProcessing={true}
+              uploadStatus={uploadStatus}
+              errorMessage={errorMessage}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {renderHeader()}
+      {renderContent()}
+    </div>
+  );
 }
 
 export default App;
