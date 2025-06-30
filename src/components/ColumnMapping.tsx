@@ -5,7 +5,7 @@ import {
   CheckCircle,
   AlertTriangle,
 } from "lucide-react";
-import type { InvestorData } from "./types/investor";
+import type { InvestorData } from "../types/investor";
 
 interface ColumnMappingProps {
   parseResult: Papa.ParseResult<string[]>;

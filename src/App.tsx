@@ -7,7 +7,7 @@ import { SelectHeaderRow } from "./components/SelectHeaderRow";
 import { ColumnMapping } from "./components/ColumnMapping";
 import { DataValidationGrid } from "./components/DataValidationGrid";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import type { InvestorData } from "./components/types/investor";
+import type { InvestorData } from "./types/investor";
 
 type AppState =
   | "empty"

@@ -6,7 +6,7 @@ import {
   CellEditingStoppedEvent,
 } from "ag-grid-community";
 import { Database, AlertTriangle, CheckCircle, Save } from "lucide-react";
-import type { InvestorData, PipelineStage } from "./types/investor";
+import type { InvestorData, PipelineStage } from "../types/investor";
 
 // Import ag-grid styles
 import "ag-grid-community/styles/ag-grid.css";
