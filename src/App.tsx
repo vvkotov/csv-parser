@@ -5,6 +5,8 @@ import { FileUpload } from "./components/FileUpload";
 import { EmptyState } from "./components/EmptyState";
 import { SelectHeaderRow } from "./components/SelectHeaderRow";
 import { ColumnMapping } from "./components/ColumnMapping";
+import { DataValidationGrid } from "./components/DataValidationGrid";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import type { InvestorData } from "./components/types/investor";
 
 type AppState =
@@ -88,6 +90,11 @@ function App() {
     setState("validating");
   };
 
+  const handleDataSave = (validatedData: InvestorData[]) => {
+    console.log("Validated data:", validatedData);
+    setState("viewing");
+  };
+
   const renderHeader = () => (
     <header className="bg-white border-b border-gray-200 mb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -166,6 +173,18 @@ function App() {
             onMappingChange={handleMappingChange}
             onConfirm={handleMappingConfirm}
           />
+        ) : null;
+
+      case "validating":
+        return parseResult && selectedHeaderRowIndex !== null ? (
+          <ErrorBoundary>
+            <DataValidationGrid
+              parseResult={parseResult}
+              headerRowIndex={selectedHeaderRowIndex}
+              columnMappings={columnMappings}
+              onSave={handleDataSave}
+            />
+          </ErrorBoundary>
         ) : null;
 
       default:
