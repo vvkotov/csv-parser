@@ -1,3 +1,5 @@
+import type { PipelineStage } from "./pipelineStage";
+
 export interface InvestorData {
   first_name: string;
   last_name: string;
@@ -6,12 +8,3 @@ export interface InvestorData {
   pipeline_stage: PipelineStage;
   phone: string | null;
 }
-
-export type PipelineStage =
-  | "target"
-  | "prospect"
-  | "engaged"
-  | "evaluating"
-  | "allocated"
-  | "dormant"
-  | "lost";

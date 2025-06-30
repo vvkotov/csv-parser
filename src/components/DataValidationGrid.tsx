@@ -6,7 +6,15 @@ import {
   CellEditingStoppedEvent,
 } from "ag-grid-community";
 import { Database, AlertTriangle, CheckCircle, Save } from "lucide-react";
-import type { InvestorData, PipelineStage } from "../types/investor";
+import type { InvestorData } from "../types/investor";
+import { PIPELINE_STAGES, type PipelineStage } from "../types/pipelineStage";
+import type { ValidationResult } from "../types/validationResult";
+import {
+  validateEmail,
+  validateRequired,
+  validatePipelineStage,
+  validatePhone,
+} from "../utils/validateCell";
 
 // Import ag-grid styles
 import "ag-grid-community/styles/ag-grid.css";
@@ -18,21 +26,6 @@ interface DataValidationGridProps {
   columnMappings: Record<number, keyof InvestorData | "ignore">;
   onSave: (validatedData: InvestorData[]) => void;
 }
-
-interface ValidationResult {
-  isValid: boolean;
-  message?: string;
-}
-
-const PIPELINE_STAGES: PipelineStage[] = [
-  "target",
-  "prospect",
-  "engaged",
-  "evaluating",
-  "allocated",
-  "dormant",
-  "lost",
-];
 
 const FIELD_LABELS: Record<keyof InvestorData, string> = {
   first_name: "First Name",
@@ -54,49 +47,6 @@ export const DataValidationGrid: React.FC<DataValidationGridProps> = ({
     Map<string, ValidationResult>
   >(new Map());
   const [isDataReady, setIsDataReady] = useState(false);
-
-  // Helper functions for validation
-  const validateEmail = (email: string): ValidationResult => {
-    if (!email || email.trim() === "") {
-      return { isValid: false, message: "Email is required" };
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim())
-      ? { isValid: true }
-      : { isValid: false, message: "Invalid email format" };
-  };
-
-  const validateRequired = (
-    value: string,
-    fieldName: string
-  ): ValidationResult => {
-    if (!value || value.trim() === "") {
-      return { isValid: false, message: `${fieldName} is required` };
-    }
-    return { isValid: true };
-  };
-
-  const validatePipelineStage = (stage: string): ValidationResult => {
-    if (!stage || stage.trim() === "") {
-      return { isValid: false, message: "Pipeline stage is required" };
-    }
-    return PIPELINE_STAGES.includes(stage.toLowerCase() as PipelineStage)
-      ? { isValid: true }
-      : {
-          isValid: false,
-          message: `Must be one of: ${PIPELINE_STAGES.join(", ")}`,
-        };
-  };
-
-  const validatePhone = (phone: string): ValidationResult => {
-    if (!phone || phone.trim() === "") {
-      return { isValid: true }; // Phone is optional
-    }
-    const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/[\s\-()]/g, ""))
-      ? { isValid: true }
-      : { isValid: false, message: "Invalid phone format" };
-  };
 
   const validateCell = (
     field: keyof InvestorData,

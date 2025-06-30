@@ -48,7 +48,6 @@ function App() {
     try {
       const csvContent = await file.text();
       const result = Papa.parse<string[]>(csvContent);
-      console.log(result);
 
       if (result.errors.length > 0) {
         throw new Error(result.errors[0].message);
