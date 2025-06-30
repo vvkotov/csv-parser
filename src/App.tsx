@@ -4,11 +4,14 @@ import { Database, Upload } from "lucide-react";
 import { FileUpload } from "./components/FileUpload";
 import { EmptyState } from "./components/EmptyState";
 import { SelectHeaderRow } from "./components/SelectHeaderRow";
+import { ColumnMapping } from "./components/ColumnMapping";
+import type { InvestorData } from "./components/types/investor";
 
 type AppState =
   | "empty"
   | "uploading"
   | "selecting-header"
+  | "mapping-columns"
   | "validating"
   | "viewing";
 
@@ -24,11 +27,15 @@ function App() {
   const [selectedHeaderRowIndex, setSelectedHeaderRowIndex] = useState<
     number | null
   >(null);
+  const [columnMappings, setColumnMappings] = useState<
+    Record<number, keyof InvestorData | "ignore">
+  >({});
 
   const handleNewUpload = () => {
     setState("empty");
     setParseResult(null);
     setSelectedHeaderRowIndex(null);
+    setColumnMappings({});
   };
 
   const handleFileUpload = async (file: File) => {
@@ -63,8 +70,22 @@ function App() {
 
   const handleHeaderConfirm = () => {
     if (selectedHeaderRowIndex !== null) {
-      setState("validating");
+      setState("mapping-columns");
     }
+  };
+
+  const handleMappingChange = (
+    columnIndex: number,
+    field: keyof InvestorData | "ignore"
+  ) => {
+    setColumnMappings((prev) => ({
+      ...prev,
+      [columnIndex]: field,
+    }));
+  };
+
+  const handleMappingConfirm = () => {
+    setState("validating");
   };
 
   const renderHeader = () => (
@@ -133,6 +154,17 @@ function App() {
             selectedRowIndex={selectedHeaderRowIndex}
             onRowSelect={handleHeaderRowSelect}
             onConfirm={handleHeaderConfirm}
+          />
+        ) : null;
+
+      case "mapping-columns":
+        return parseResult && selectedHeaderRowIndex !== null ? (
+          <ColumnMapping
+            parseResult={parseResult}
+            headerRowIndex={selectedHeaderRowIndex}
+            columnMappings={columnMappings}
+            onMappingChange={handleMappingChange}
+            onConfirm={handleMappingConfirm}
           />
         ) : null;
 
