@@ -302,6 +302,7 @@ export const DataValidationGrid: React.FC<DataValidationGridProps> = ({
                 tooltipShowDelay={500}
                 suppressLoadingOverlay={true}
                 suppressNoRowsOverlay={false}
+                singleClickEdit={true}
               />
             </div>
           )}

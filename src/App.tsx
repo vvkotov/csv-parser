@@ -1,14 +1,32 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import Papa from "papaparse";
 import { FileUpload } from "./components/FileUpload";
 import { EmptyState } from "./components/EmptyState";
-import { PreviewTable } from "./components/PreviewTable";
-import { SelectHeaderRow } from "./components/SelectHeaderRow";
-import { ColumnMapping } from "./components/ColumnMapping";
-import { DataValidationGrid } from "./components/DataValidationGrid";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/Header";
 import type { InvestorData } from "./types/investor";
+
+// Lazy load components used in later steps for better performance
+const PreviewTable = lazy(() =>
+  import("./components/PreviewTable").then((module) => ({
+    default: module.PreviewTable,
+  }))
+);
+const SelectHeaderRow = lazy(() =>
+  import("./components/SelectHeaderRow").then((module) => ({
+    default: module.SelectHeaderRow,
+  }))
+);
+const ColumnMapping = lazy(() =>
+  import("./components/ColumnMapping").then((module) => ({
+    default: module.ColumnMapping,
+  }))
+);
+const DataValidationGrid = lazy(() =>
+  import("./components/DataValidationGrid").then((module) => ({
+    default: module.DataValidationGrid,
+  }))
+);
 
 type AppState =
   | "empty"
@@ -125,6 +143,18 @@ function App() {
     setState("viewing");
   };
 
+  // Loading component for lazy-loaded components
+  const LoadingSpinner = () => (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (state) {
       case "empty":
@@ -154,46 +184,54 @@ function App() {
 
       case "previewing":
         return parseResult ? (
-          <PreviewTable
-            parseResult={parseResult}
-            onContinue={handlePreviewContinue}
-          />
+          <Suspense fallback={<LoadingSpinner />}>
+            <PreviewTable
+              parseResult={parseResult}
+              onContinue={handlePreviewContinue}
+            />
+          </Suspense>
         ) : null;
 
       case "selecting-header":
         return parseResult ? (
-          <SelectHeaderRow
-            parseResult={parseResult}
-            selectedRowIndex={selectedHeaderRowIndex}
-            onRowSelect={handleHeaderRowSelect}
-            onConfirm={handleHeaderConfirm}
-          />
+          <Suspense fallback={<LoadingSpinner />}>
+            <SelectHeaderRow
+              parseResult={parseResult}
+              selectedRowIndex={selectedHeaderRowIndex}
+              onRowSelect={handleHeaderRowSelect}
+              onConfirm={handleHeaderConfirm}
+            />
+          </Suspense>
         ) : null;
 
       case "mapping-columns":
         return parseResult && selectedHeaderRowIndex !== null ? (
-          <ColumnMapping
-            parseResult={parseResult}
-            headerRowIndex={selectedHeaderRowIndex}
-            columnMappings={columnMappings}
-            removedColumns={removedColumns}
-            onMappingChange={handleMappingChange}
-            onColumnRemove={handleColumnRemove}
-            onColumnRestore={handleColumnRestore}
-            onConfirm={handleMappingConfirm}
-          />
+          <Suspense fallback={<LoadingSpinner />}>
+            <ColumnMapping
+              parseResult={parseResult}
+              headerRowIndex={selectedHeaderRowIndex}
+              columnMappings={columnMappings}
+              removedColumns={removedColumns}
+              onMappingChange={handleMappingChange}
+              onColumnRemove={handleColumnRemove}
+              onColumnRestore={handleColumnRestore}
+              onConfirm={handleMappingConfirm}
+            />
+          </Suspense>
         ) : null;
 
       case "validating":
         return parseResult && selectedHeaderRowIndex !== null ? (
-          <ErrorBoundary>
-            <DataValidationGrid
-              parseResult={parseResult}
-              headerRowIndex={selectedHeaderRowIndex}
-              columnMappings={columnMappings}
-              onSave={handleDataSave}
-            />
-          </ErrorBoundary>
+          <Suspense fallback={<LoadingSpinner />}>
+            <ErrorBoundary>
+              <DataValidationGrid
+                parseResult={parseResult}
+                headerRowIndex={selectedHeaderRowIndex}
+                columnMappings={columnMappings}
+                onSave={handleDataSave}
+              />
+            </ErrorBoundary>
+          </Suspense>
         ) : null;
 
       default:
