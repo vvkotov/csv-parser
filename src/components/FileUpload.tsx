@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { Upload, FileText, AlertCircle } from "lucide-react";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 
 interface FileUploadProps {
   onFileUpload: (file: File) => void;

@@ -1,5 +1,6 @@
 import React from "react";
-import { CheckCircle, Table } from "lucide-react";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Table from "lucide-react/dist/esm/icons/table";
 
 interface SelectHeaderRowProps {
   parseResult: Papa.ParseResult<string[]>;

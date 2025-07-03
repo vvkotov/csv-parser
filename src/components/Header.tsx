@@ -1,4 +1,5 @@
-import { Database, Upload } from "lucide-react";
+import Database from "lucide-react/dist/esm/icons/database";
+import Upload from "lucide-react/dist/esm/icons/upload";
 
 interface HeaderProps {
   showUploadButton: boolean;

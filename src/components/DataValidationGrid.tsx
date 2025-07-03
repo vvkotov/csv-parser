@@ -5,7 +5,10 @@ import {
   CellClassParams,
   CellEditingStoppedEvent,
 } from "ag-grid-community";
-import { Database, AlertTriangle, CheckCircle, Save } from "lucide-react";
+import Database from "lucide-react/dist/esm/icons/database";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Save from "lucide-react/dist/esm/icons/save";
 import type { InvestorData } from "../types/investor";
 import { PIPELINE_STAGES, type PipelineStage } from "../types/pipelineStage";
 import type { ValidationResult } from "../types/validationResult";
