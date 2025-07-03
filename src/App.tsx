@@ -27,6 +27,11 @@ const DataValidationGrid = lazy(() =>
     default: module.DataValidationGrid,
   }))
 );
+const Summary = lazy(() =>
+  import("./components/Summary").then((module) => ({
+    default: module.Summary,
+  }))
+);
 
 type AppState =
   | "empty"
@@ -53,6 +58,11 @@ function App() {
     Record<number, keyof InvestorData | "ignore">
   >({});
   const [removedColumns, setRemovedColumns] = useState<Set<number>>(new Set());
+  const [importResults, setImportResults] = useState<{
+    contactsCreated: number;
+    rowsSkipped: number;
+    totalRowsProcessed: number;
+  } | null>(null);
 
   const handleNewUpload = () => {
     setState("empty");
@@ -60,6 +70,7 @@ function App() {
     setSelectedHeaderRowIndex(null);
     setColumnMappings({});
     setRemovedColumns(new Set());
+    setImportResults(null);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -140,6 +151,21 @@ function App() {
 
   const handleDataSave = (validatedData: InvestorData[]) => {
     console.log("Validated data:", validatedData);
+
+    // Calculate import statistics
+    if (parseResult && selectedHeaderRowIndex !== null) {
+      const totalDataRows =
+        parseResult.data.length - selectedHeaderRowIndex - 1;
+      const contactsCreated = validatedData.length;
+      const rowsSkipped = totalDataRows - contactsCreated;
+
+      setImportResults({
+        contactsCreated,
+        rowsSkipped,
+        totalRowsProcessed: totalDataRows,
+      });
+    }
+
     setState("viewing");
   };
 
@@ -231,6 +257,18 @@ function App() {
                 onSave={handleDataSave}
               />
             </ErrorBoundary>
+          </Suspense>
+        ) : null;
+
+      case "viewing":
+        return importResults ? (
+          <Suspense fallback={<LoadingSpinner />}>
+            <Summary
+              contactsCreated={importResults.contactsCreated}
+              rowsSkipped={importResults.rowsSkipped}
+              totalRowsProcessed={importResults.totalRowsProcessed}
+              onNewUpload={handleNewUpload}
+            />
           </Suspense>
         ) : null;
 
