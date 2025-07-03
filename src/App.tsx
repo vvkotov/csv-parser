@@ -2,6 +2,7 @@ import { useState } from "react";
 import Papa from "papaparse";
 import { FileUpload } from "./components/FileUpload";
 import { EmptyState } from "./components/EmptyState";
+import { PreviewTable } from "./components/PreviewTable";
 import { SelectHeaderRow } from "./components/SelectHeaderRow";
 import { ColumnMapping } from "./components/ColumnMapping";
 import { DataValidationGrid } from "./components/DataValidationGrid";
@@ -12,6 +13,7 @@ import type { InvestorData } from "./types/investor";
 type AppState =
   | "empty"
   | "uploading"
+  | "previewing"
   | "selecting-header"
   | "mapping-columns"
   | "validating"
@@ -55,7 +57,7 @@ function App() {
 
       setParseResult(result);
       setUploadStatus("success");
-      setState("selecting-header");
+      setState("previewing");
     } catch (error) {
       setUploadStatus("error");
       setErrorMessage(
@@ -63,6 +65,10 @@ function App() {
       );
       setState("empty");
     }
+  };
+
+  const handlePreviewContinue = () => {
+    setState("selecting-header");
   };
 
   const handleHeaderRowSelect = (rowIndex: number) => {
@@ -120,6 +126,14 @@ function App() {
             />
           </div>
         );
+
+      case "previewing":
+        return parseResult ? (
+          <PreviewTable
+            parseResult={parseResult}
+            onContinue={handlePreviewContinue}
+          />
+        ) : null;
 
       case "selecting-header":
         return parseResult ? (
