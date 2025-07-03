@@ -34,12 +34,14 @@ function App() {
   const [columnMappings, setColumnMappings] = useState<
     Record<number, keyof InvestorData | "ignore">
   >({});
+  const [removedColumns, setRemovedColumns] = useState<Set<number>>(new Set());
 
   const handleNewUpload = () => {
     setState("empty");
     setParseResult(null);
     setSelectedHeaderRowIndex(null);
     setColumnMappings({});
+    setRemovedColumns(new Set());
   };
 
   const handleFileUpload = async (file: File) => {
@@ -88,6 +90,29 @@ function App() {
     setColumnMappings((prev) => ({
       ...prev,
       [columnIndex]: field,
+    }));
+  };
+
+  const handleColumnRemove = (columnIndex: number) => {
+    setRemovedColumns((prev) => new Set([...prev, columnIndex]));
+    // Remove from column mappings when removed
+    setColumnMappings((prev) => {
+      const newMappings = { ...prev };
+      delete newMappings[columnIndex];
+      return newMappings;
+    });
+  };
+
+  const handleColumnRestore = (columnIndex: number) => {
+    setRemovedColumns((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(columnIndex);
+      return newSet;
+    });
+    // Restore default mapping when restored
+    setColumnMappings((prev) => ({
+      ...prev,
+      [columnIndex]: "ignore",
     }));
   };
 
@@ -151,7 +176,10 @@ function App() {
             parseResult={parseResult}
             headerRowIndex={selectedHeaderRowIndex}
             columnMappings={columnMappings}
+            removedColumns={removedColumns}
             onMappingChange={handleMappingChange}
+            onColumnRemove={handleColumnRemove}
+            onColumnRestore={handleColumnRestore}
             onConfirm={handleMappingConfirm}
           />
         ) : null;

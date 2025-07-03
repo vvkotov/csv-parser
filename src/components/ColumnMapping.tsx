@@ -1,20 +1,23 @@
 import React from "react";
-import {
-  Settings,
-  ChevronDown,
-  CheckCircle,
-  AlertTriangle,
-} from "lucide-react";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
 import type { InvestorData } from "../types/investor";
 
 interface ColumnMappingProps {
   parseResult: Papa.ParseResult<string[]>;
   headerRowIndex: number;
   columnMappings: Record<number, keyof InvestorData | "ignore">;
+  removedColumns: Set<number>;
   onMappingChange: (
     columnIndex: number,
     field: keyof InvestorData | "ignore"
   ) => void;
+  onColumnRemove: (columnIndex: number) => void;
+  onColumnRestore: (columnIndex: number) => void;
   onConfirm: () => void;
 }
 
@@ -49,7 +52,10 @@ export const ColumnMapping: React.FC<ColumnMappingProps> = ({
   parseResult,
   headerRowIndex,
   columnMappings,
+  removedColumns,
   onMappingChange,
+  onColumnRemove,
+  onColumnRestore,
   onConfirm,
 }) => {
   const { data } = parseResult;
@@ -61,8 +67,11 @@ export const ColumnMapping: React.FC<ColumnMappingProps> = ({
     | "ignore"
   )[];
 
-  // Check which required fields are mapped
-  const mappedFields = Object.values(columnMappings);
+  // Check which required fields are mapped (only consider active columns)
+  const activeMappings = Object.entries(columnMappings).filter(
+    ([columnIndex]) => !removedColumns.has(parseInt(columnIndex))
+  );
+  const mappedFields = activeMappings.map(([, field]) => field);
   const missingRequiredFields = REQUIRED_FIELDS.filter(
     (field) => !mappedFields.includes(field)
   );
@@ -71,6 +80,11 @@ export const ColumnMapping: React.FC<ColumnMappingProps> = ({
     new Set(mappedFields.filter((field) => field !== "ignore")).size;
 
   const isValidMapping = missingRequiredFields.length === 0 && !hasDuplicates;
+
+  // Calculate statistics
+  const activeColumnsCount = headerRow.length - removedColumns.size;
+  const mappedCount = mappedFields.filter((f) => f !== "ignore").length;
+  const ignoredCount = mappedFields.filter((f) => f === "ignore").length;
 
   const renderColumnCard = (header: string, columnIndex: number) => {
     const sampleValue = sampleRow[columnIndex] || "";
@@ -153,6 +167,61 @@ export const ColumnMapping: React.FC<ColumnMappingProps> = ({
             <span className="text-xs">Field already mapped</span>
           </div>
         )}
+
+        {/* Remove Column Button */}
+        <div className="flex items-center justify-end mt-3">
+          <button
+            onClick={() => onColumnRemove(columnIndex)}
+            className="flex items-center space-x-1 px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+          >
+            <Trash2 className="w-3 h-3" />
+            <span>Remove Column</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRemovedColumnCard = (header: string, columnIndex: number) => {
+    const sampleValue = sampleRow[columnIndex] || "";
+
+    return (
+      <div
+        key={columnIndex}
+        className="bg-gray-50 border border-gray-300 rounded-lg p-4 transition-all duration-200 opacity-75"
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <h3
+              className="text-sm font-medium text-gray-500 truncate"
+              title={header}
+            >
+              {header || `Column ${columnIndex + 1}`}
+            </h3>
+            <p
+              className="text-xs text-gray-400 mt-1 truncate"
+              title={sampleValue}
+            >
+              Sample: {sampleValue || <span className="italic">empty</span>}
+            </p>
+          </div>
+          <span className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full">
+            Removed
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            This column will be excluded from processing
+          </p>
+          <button
+            onClick={() => onColumnRestore(columnIndex)}
+            className="flex items-center space-x-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Restore</span>
+          </button>
+        </div>
       </div>
     );
   };
@@ -207,26 +276,48 @@ export const ColumnMapping: React.FC<ColumnMappingProps> = ({
           </div>
         </div>
 
-        {/* Column Mapping Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {headerRow.map((header, index) => renderColumnCard(header, index))}
+        {/* Active Columns */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-gray-900 mb-4">
+            Active Columns
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {headerRow.map((header, index) =>
+              !removedColumns.has(index)
+                ? renderColumnCard(header, index)
+                : null
+            )}
+          </div>
         </div>
+
+        {/* Removed Columns */}
+        {removedColumns.size > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">
+              Removed Columns ({removedColumns.size})
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {headerRow.map((header, index) =>
+                removedColumns.has(index)
+                  ? renderRemovedColumnCard(header, index)
+                  : null
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-6 border-t border-gray-200">
           <div className="text-sm text-gray-600">
-            <span className="font-medium">{headerRow.length}</span> columns
-            found •
-            <span className="font-medium">
+            <span className="font-medium">{headerRow.length}</span> total
+            columns •<span className="font-medium"> {activeColumnsCount}</span>{" "}
+            active •<span className="font-medium"> {mappedCount}</span> mapped •
+            <span className="font-medium"> {ignoredCount}</span> ignored •
+            <span className="font-medium text-red-600">
               {" "}
-              {mappedFields.filter((f) => f !== "ignore").length}
+              {removedColumns.size}
             </span>{" "}
-            mapped •
-            <span className="font-medium">
-              {" "}
-              {mappedFields.filter((f) => f === "ignore").length}
-            </span>{" "}
-            ignored
+            removed
           </div>
 
           <button
